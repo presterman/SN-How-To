@@ -1,0 +1,279 @@
+1.2 Query for all incidents created in the past 3 days where the caller is ÔJoe EmployeeÕÉlog a count of records returned
+
+#background script
+var count=0;
+var gr = new GlideRecord('incident');
+gr.addQuery('caller_id.user_name', 'sdavid');
+gr.addQuery('sys_created_on', '>', gs.daysAgoStart(3));
+gr.query();
+while (gr.next()) {
+count+=1;
+
+
+
+}
+
+gs.log("Count is " + count);
+
+
+
+--------------------------------
+
+1.3
+
+
+#background script
+var grIncident = new GlideRecord('incident');
+			grIncident.initialize();
+			grIncident.opened_by='Tanuja Varkanthe';
+			grIncident.short_description ="Test TV Short 3";
+			grIncident.description = "Test TV Long 3";
+            grIncident.caller_id='Tanuja Varkanthe';
+            grIncident.priority='1 - Critical'; #does not work
+			grIncident.insert();
+-------------------------------------
+1.4
+
+
+#background script
+var grIncident = new GlideRecord('incident');
+			grIncident.initialize();
+			grIncident.opened_by='Tanuja Varkanthe';
+			grIncident.short_description ="Test TV Short CI";
+			grIncident.description = "Test TV Long CI";
+            grIncident.caller_id='Tanuja Varkanthe';
+            grIncident.cmdb_ci='Airwatch'; 
+			grIncident.insert();
+
+
+-------------------------------------
+
+2.2 Set up a department on your user record. Use a UI action to show an information message with the sys_id of your department.
+#Add Alert UI Action button on the User form and then add
+#Onclick: djsalert() 
+#UI Action scipt: djsalert
+function djsalert() {
+	
+	
+	alert(g_form.getValue('department'));
+}
+-------------------------------------
+
+2.4 Use a client script or UI policy to display an alert message showing the title of the currently logged-in user.
+
+#Client Script
+function onLoad() {
+   //Type appropriate comment here, and begin script below
+	alert(g_form.getValue('title'));
+}
+
+-----------------------------------------
+3.1 Only allow admins to delete user records
+#Check the admin overrides check box in the ACL delete/sys_user operation
+#Elevated role security_admin is needed for this
+
+#Note, addded to the condition field, this stops the user deleting their own record
+#gs.getUserID() != current.getUniqueValue();
+
+
+
+------------------------------------------
+
+3.4 Disallow ANY deletion of Task records (even admins)
+
+#Uncheck the admin overrides check box in the ACL delete/sc_task operation
+
+
+------------------------------------------
+3.6 Disallow ÔitilÕ users the ability to read any record where the state is ÔClosedÕ. Hint: You shouldnÕt use an ACL for this one!
+#Business rule
+function onBefore(current, previous) {  
+  if (!gs.hasRole("admin") ) { //Admin Override  
+  if (gs.hasRole("itil") && gs.isInteractive()) {  
+  var states = [1, 2, 3, 4, 5, 6];  
+  current.addQuery('state', 'IN', states.toString());  
+   }  
+  }  
+  }  
+}  
+
+#OR...for glide system - client script  this looks like a good option
+ gs.hasRoleExactly('itil')
+ 
+#ALSO see these example scripts###########
+
+The purpose of the Ôincident queryÕ business rule is to limit the access of records (rows) on the ÔIncidentÕ table.
+Specifically, it says that you need to have the ÔitilÕ role to access incident records unless you are the person listed as
+the Caller or Opened by on the Incident.  It is because of this business rule that your end-users can only see their own
+incident records in the system!å  Below is the script (along with comments explaining exactly how it works).
+
+if (!gs.hasRole('itil') && gs.getSession().isInteractive()) { //Check if the user has the 'itil' role and if the session is an actual user session
+   //If they DON'T have the 'itil' role then do the following...
+   var u = gs.getUserID(); //Get the sys_id value of the current user
+   var q = current.addQuery('caller_id', u); //Modify the current query on the incident table so that if the user is listed in the 'caller_id' field they can see the record
+   q.addOrCondition('opened_by', u); //Also allow the user access if they are the one who opened the incident (even if they aren't the caller)
+   gs.print('query restricted to user: ' + u);
+}
+ 
+HereÕs another example. This time we will restrict visibility to records if the user is a member of the current assignment group.
+
+if (gs.getSession().isInteractive()) {          
+   //Restrict to caller or members of assigned group...
+   var u = gs.getUserID(); //Get the sys_id value of the current user
+   var g = getMyGroups(); //Get the list of the current user groups
+   var q = current.addQuery('caller_id', u).addOrCondition('assignment_group', getMyGroups()); //Modify the current query on the incident table
+}
+
+-------------------------------
+4.1 Set up a client script on your incident form to hide a field, make a field mandatory, and make a field read-only.
+Do the same thing with a UI policy.
+
+Almost the same as 9.1 below
+function onLoad() {
+   //Type appropriate comment here, and begin script below
+   //djs	
+	//if(g_form.getValue('Location'));
+	var  loc = g_form.getReference('location');
+	var where=loc.name; //this gives the string value rather than sys_id
+	if(where.length > 0)
+		{
+			
+		g_form.setVisible('priority',false);
+		g_form.setMandatory('location', true);	
+		g_form.setReadonly('caller_id',true);	
+			
+		}
+   
+}
+#UI Policy is almost the same, except with filters + some script.
+
+----------------------------------
+4.3 Create a client script to populate the ÔLocationÕ field on the incident form with the location of the Caller as the ÔCallerÕ field changes.
+
+#Make sure that the field name is set to 'Caller' on the scripting form
+function onChange(control, oldValue, newValue, isLoading, isTemplate) {
+   if (isLoading || newValue === '') {
+      return;
+   }
+
+   //Type appropriate comment here, and begin script below
+	 var userInfo = g_form.getReference('caller_id', doAlert);
+   
+}
+
+function doAlert(userInfo) {
+     // g_form.setValue('u_phone',userInfo.phone);
+      g_form.setValue('location', userInfo.location);
+     // g_form.setValue('u_room', userInfo.u_room);
+     // g_form.setValue('u_floor', userInfo.u_floor);
+     // g_form.setValue('u_department',userInfo.department);
+}
+
+
+
+---------------------------------
+4.4 Stop the submission of any Priority 1 incident created by a user without the ÔitilÕ role. Alert the user when this happens.
+
+#For Catalog items go to Catalog client scripts and add this to an onSubmit() script.
+#But a user, itil, for example, may be able to add a new incident so this must be added to the form client script also
+#..if it is required
+function onSubmit() {  
+    if(!g_user.hasRole('itil') && g_form.getValue('impact') == 1){  
+        alert('Record submission aborted because it is high priority and you do not have itil role');  
+        //Make sure dirty form still works  
+        g_form.submitted = false;  
+  
+        //Abort submission  
+        return false;  
+    }  
+}  
+---------------------------------------------
+5. WORKFLOW
+#NOTE for a record producer workflow.
+#Set the workflow to kick off (properties) when certain conditions are met.
+#Variables and Variable sets are different. Variables can be associated with a table/field. Variables in Variable sets are not associated
+#with a field but ARE held in the variables table
+
+5.2 Add 3 approvals to your change request. The first should be an approval from the manager of the person requesting the change.
+
+
+------------------------------------------
+5.6 Add an approval for the ÔRequested forÕ personÕs manager
+
+Approval-User ->Users #select the fields icon# ->$(requested_for.manager)
+
+-------------------------------------------
+6.4 Add a ÔTransform Map ScriptÕ to get the values of 2 of the import fields for each row, concatenate them, and populate them into a new field.
+
+#Note that the SOURCE changes the field name by pre-pending a 'u_'
+answer = (function transformEntry(source) {
+	
+     var val=source.u_name;
+	  ret=val + " the location";
+	return ret; // return the value to be put into the target field
+
+})(source);
+
+
+
+
+--------------------------------------------
+
+
+8.5 Open a couple of Business service and computer records and assign them to a particular user. Modify your reference qualifier to only display Business
+services and computers assigned to the user populated in the ÔCallerÕ field. (see (9.3 below)
+
+---------------------------------------
+9.1 Open up any catalog item and set up a client script that shows/hides a field based on the contents of another. Do the same with a catalog UI policy.
+
+function onLoad() {
+   //Type appropriate comment here, and begin script below
+	
+	var  loc = g_form.getReference('location');
+	var where=loc.name;
+	if(where.length > 0)
+		{
+			
+		g_form.setVisible('priority',false);	
+			
+		}
+   
+}
+
+-------------------------------------
+
+
+9.2 Set up a record producer for the incident table that contains a ÔCallerÕ and ÔConfiguration itemÕ reference fields the same as your incident form. Automatically
+populate these fields onto an incident record without using any scripting.
+#(Add variables as on personal Developer instance to show logged-in user etc.)
+#To automatically show logged in user
+#Variables->Default Value:javascript:gs.getUser().getDisplayName()
+
+-------------------------------------------
+
+9.3 Create a reference qualifier for your ÔConfiguration itemÕ variable that shows only CIs assigned to the user populated in the ÔCallerÕ field.
+#Script include
+var ReferenceQualifiersCI = Class.create();    
+ReferenceQualifiersCI.prototype = {    
+    initialize: function() {    
+    },    
+    
+    forCurrentCaller:function() {    
+        var caller = current.caller_id + '';    
+    
+        //just ones assigned to this caller  
+        return 'assigned_to=' + caller;    
+    },    
+    
+    type: 'ReferenceQualifiersCI'    
+};
+
+#Incident Form
+#Incident->Configuration Item->Dictionary Entry->Reference Specification
+#Then This entry
+Reference: Configuration Item
+Use Reference Qualifier: Advanced
+Reference Qual: javascript:new ReferenceQualifiersCI().forCurrentCaller();
+#And in the Configuration Item table, of course, the items should be Assigned to the test user, whoever that is
+
+------------------------------------------------
