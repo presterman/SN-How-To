@@ -5,3 +5,30 @@ How to grant security admin to an admin.
 3.Select Elevate Roles
 4.Choose security_admin and click OK
 5.Then assign the security_admin role to the new User
+
+//---------------------------------------------
+
+//JavaScript - a way to duplicate any GlideRecord.
+
+//query the rows we want to copy
+var ga = new GlideRecord('cmdb_ci_server');
+ga.query();
+
+while (ga.next()) {
+    //get all the fields for this record
+    var fields = ga.getFields();
+    //create a new record
+    var gr = new GlideRecord('cmdb_ci_server');
+    gr.initialize();
+    for (var i = 0; i < fields.size(); i++) {
+        var glideElement = fields.get(i);
+        //make sure we don't copy the sys_id
+        if(glideElement.getName() != 'sys_id')
+        {
+            gr[key] = ga.getValue(glideElement.getName());                  
+        }
+    }
+    var newSysId = gr.insert();
+};
+
+//------------------------------------------------
