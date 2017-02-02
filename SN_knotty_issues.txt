@@ -1,0 +1,7 @@
+How to grant security admin to an admin.
+
+1.Log in as admin
+2.Click on your name in the top-right corner
+3.Select Elevate Roles
+4.Choose security_admin and click OK
+5.Then assign the security_admin role to the new User
