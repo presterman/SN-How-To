@@ -32,3 +32,37 @@ while (ga.next()) {
 };
 
 //------------------------------------------------
+//Javascript copy pattern from a list, using the first check list item as the model
+function ShowMe()
+{
+var v = g_list.getChecked();
+//var a = new Array();
+var a=[];
+a = v.split(",");
+var start_int=0; 
+var seq=0;	
+var prefix='';	
+for (var i=0; i<a.length; i++)
+ {
+	 var gr= new GlideRecord('sys_user');
+	 gr.addQuery('sys_id',a[i]);
+	 gr.query();
+	 while (gr.next())
+		 {
+			
+			if(i==0) //the first one selected is the model, the rest follow the model but increment the last three numbers for each                          // checked item
+				{
+				 var phone1= gr.getValue('phone');
+				 prefix=phone1.substring(0,phone1.length-3);	//get all chars except last three
+				 var start_num=phone1.substring(phone1.length-3); //get the last 3, these are the numeric chars. to be incremented		
+				 start_int=parseInt(start_num);	//make the start_num numeric
+				}
+			seq=start_int+i; 
+			gr.phone=prefix + seq; 
+			gr.update(); 
+		 }
+	 
+ }
+g_list.refresh();	//refresh the list in the browser window with the new values
+
+}
