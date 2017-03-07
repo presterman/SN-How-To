@@ -1,4 +1,4 @@
-How to grant security admin to an admin.
+//How to grant security admin to an admin.
 
 1.Log in as admin
 2.Click on your name in the top-right corner
@@ -66,3 +66,16 @@ for (var i=0; i<a.length; i++)
 g_list.refresh();	//refresh the list in the browser window with the new values
 
 }
+
+-----------------------------------------
+//Javascript Get fields, type and max length from a table
+var t= new GlideRecord("sys_dictionary");
+t.addQuery("name", "table name");
+t.query()
+while (t.next())
+{
+
+    gs.log( t.element + " " + t.internal_type + " " + t.max_length)  
+}
+
+-----------------------------------------------
