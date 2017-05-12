@@ -79,3 +79,95 @@ while (t.next())
 }
 
 -----------------------------------------------
+//Change a label on a form dynamically
+onLoad() {
+   //Change the description label to 'My New Label' with bold red text
+   changeFieldLabel('u_subtype', 'Request Subtype', 'black', 'normal');
+}
+
+function changeFieldLabel(field, label, color, weight){
+   try{
+      var labelElement = $('label.' +  g_form.getControl(field).id);
+      labelElement.select('.label-text').each(function(elmt) {
+         elmt.innerHTML = label + '';
+         if(color)
+            elmt.style.color = color;
+         if(weight)
+            elmt.style.fontWeight = weight;
+      });
+   }catch(e){}
+   
+   ----------------------------------------------------------
+   //Filling the selected side of a list box from javascript, refreshing the selected items - moving them back to the unselected box and so on..
+   
+
+var varName = 'cat_list';
+var leftBucket = gel(varName + '_select_0');
+var rightBucket = gel(varName + '_select_1');
+var selectedOptions = leftBucket.options;	
+var defaultOptions=[];		
+var selectedIDs=[];	
+var rightToleftIDs=[];	
+var j = 0;	
+var index = 0;
+
+//Move any left bucket items back to the right bucket full list	
+	
+ for(j=0;j < rightBucket.options.length; j++)
+			   {
+				  if(rightBucket.options[j].value!='')
+					  {
+				         rightToleftIDs.push(j);
+						  
+					  }
+				   
+			   }
+	
+
+moveSelectedOptions(rightToleftIDs, rightBucket, leftBucket, '--None--');	
+sortSelect(leftBucket);	
+
+//Capture the default options for  the selection
+	var cr= new GlideRecord('u_complex_requests');
+	cr.addQuery('u_complex_request',newValue);
+	cr.query();
+	while (cr.next())
+		{
+			
+			defaultOptions.push(cr.u_cat_item);
+			
+		}
+	
+//Find the index in the right bucket that corresponds to the defaults
+for(var i = 0; i < selectedOptions.length; i++)
+{
+
+	for(j=0;j<defaultOptions.length;j++)
+		{
+			
+			if(selectedOptions[i].value==defaultOptions[j])
+				{
+					
+					 selectedIDs[index] = i;
+					 index++;
+					 break;
+				}
+	}
+  
+}	
+		
+//set it to 0 options	
+rightBucket.options.length=0;	
+//Move the defaults back to the right bucket	
+moveSelectedOptions(selectedIDs, leftBucket, rightBucket, '--None--');
+//Sort the right bucket
+sortSelect(rightBucket);
+
+
+   -------------------------------------------
+   
+   
+   
+   
+   
+
