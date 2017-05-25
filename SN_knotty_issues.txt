@@ -166,7 +166,25 @@ sortSelect(rightBucket);
 
    -------------------------------------------
    
-   
+    //Compare dates - ensuring that one is before the other etc.
+   //get today's date	
+  var currentDateObj = new Date(); 
+  var currentDateStr = formatDate(currentDateObj, g_user_date_format); 
+  var currentDateNum = getDateFromFormat(currentDateStr, g_user_date_format); //returns milliseconds
+	
+  var myDueDateStr=newValue.toString();	//newValue here is the value from a datetime field like due_date
+	 //get the Date part of Due Date
+      myDueDateStr=myDueDateStr.substring(0,10);	
+  var dueDateNum = getDateFromFormat(myDueDateStr, g_user_date_format); //milliseconds also
+         
+	//Compares the times milliseconds-millliseconds
+    if (dueDateNum < currentDateNum) { 
+	g_form.addErrorMessage('The Due date cannot be set or changed to a date before Today!');	
+	  alert('The Due date cannot be set or changed to a date before Today');
+	  g_form.setValue('due_date','');	
+     
+	}
+	
    
    
    
